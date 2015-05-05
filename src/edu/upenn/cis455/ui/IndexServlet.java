@@ -70,9 +70,11 @@ public class IndexServlet extends HttpServlet {
 	}
 	
 	private int corpusSize;
+	private HashMap<Term, UrlRanking> rankings;
 	
 	private ArrayList<Result> getResults(String originalQuery)
 	{
+		rankings = new HashMap<Term, UrlRanking>();
 		DBWrapperIndexer.init("/home/cis455/workspace/cis555-project/database");
 		String [] originalQueryTokens = originalQuery.split(" ");
 		HashMap<String, String> basicWordToSearchQueryWord = new HashMap<String, String>();
@@ -85,7 +87,6 @@ public class IndexServlet extends HttpServlet {
 		}
 		StringTokenizer st = new StringTokenizer(lowerCaseBasicSearchString, " ");
 		ArrayList<Term> allTerms = new ArrayList<Term>();
-		urlsToCosSim = new HashMap<String,Double>();
 		HashMap<String, ArrayList<Term>> urlToTerms = new HashMap<String, ArrayList<Term>>();
 		while (st.hasMoreElements()) {
 			String nextString = (String) st.nextElement();
@@ -100,27 +101,27 @@ public class IndexServlet extends HttpServlet {
 			//store all Term objects associated with the search
 			allTerms.add(curr);
 			HashMap<String, Double> urlToTFs = curr.getUrlToTFHashMap();
-			for(String url: urlToTFs.keySet())
-			{
-				calculateCosSim(curr, url, urlToTFs);
-				if(urlToTerms.containsKey(url))
-				{
-					//if the url is in the hashmap of Url to Terms in the search query in that document
-					//then get the value for the hashmap, add this term to the arraylist and put it back in
+			for (String url : urlToTFs.keySet()) {
+				rankings.put(curr, new UrlRanking(url));
+				if (urlToTerms.containsKey(url)) {
+					// if the url is in the hashmap of Url to Terms in the
+					// search query in that document
+					// then get the value for the hashmap, add this term to the
+					// arraylist and put it back in
 					// the hashmap
 					ArrayList<Term> terms = urlToTerms.get(url);
 					terms.add(curr);
 					urlToTerms.put(url, terms);
-				}
-				else
-				{
-					//looking at all urls and their TFs associated with one term
-					//if the url is not in the mapping from url to the Terms in the search query
-					//then add it to the hashmap
+				} else {
+					// looking at all urls and their TFs associated with one
+					// term
+					// if the url is not in the mapping from url to the Terms in
+					// the search query then add it to the hashmap
 					ArrayList<Term> terms = new ArrayList<Term>();
 					terms.add(curr);
 					urlToTerms.put(url, terms);
 				}
+				calculateTfIdf(curr, url, urlToTFs);
 			}
 		}
 		ArrayList<Result> results = new ArrayList<Result>();
@@ -130,15 +131,12 @@ public class IndexServlet extends HttpServlet {
 		for (String url : urlToTerms.keySet()) {
 			double score = 0;
 			ArrayList<Term> terms = urlToTerms.get(url);
-			Double cosSim = calculateCosSim(terms, url);
-			Double pageRank = fetchPageRank(url);
-			Double proximityScore = calculateProximity(terms, url);
+			fetchPageRank(url);
+			calculateProximity(terms, url);
 			if (terms.size() > 1) {
 				score += 5000 * terms.size() - 1;
 			}
-			score += (0 * cosSim) + (0 * pageRank) + (0 * proximityScore);
-
-			//score += tf;
+			//score = rankings.get(url).calculateHypeScore();
 			DocInfo docInfo = DBWrapperIndexer
 					.getDocInfo(url);
 			Term firstTerm = terms.get(0);
@@ -186,46 +184,35 @@ public class IndexServlet extends HttpServlet {
 		
 	}
 
-	private Double calculateProximity(ArrayList<Term> terms, String url) {
+	private void calculateProximity(ArrayList<Term> terms, String url) {
 		// TODO Fix this bug.
 		Term tmp = terms.get(0);
 		tmp.getLocations(url);
-		return (double) terms.size();
+		
 	}
 
-	private Double fetchPageRank(String url) {
+	private void fetchPageRank(String url) {
 		// TODO Fix this and make sure on startup
 		// we're downloading all the PageRank data
-		return 0.85;
+		//PageRank pRank = DBWrapperIndexer.get
 	}
 	
-	private HashMap<String, Double> urlsToCosSim;
 
 	/**
-	 * Calculates the cosine similarity of one URL with the
-	 * search query.
-	 * @param term - the word we're
+	 * Calculates the cosine similarity of one URL with the search query.
+	 * @param term
 	 * @param url
 	 * @param urlToTFs
 	 */
-	private void calculateTfIdf(Term term, String url, HashMap<String, Double> urlToTFs) {
-		ArrayList<Double> vector = new ArrayList<Double>();
-		for (Term t : terms) {
-			double tf = terms.get(0).getTermFrequency(url);
-			for (int i = 1; i < terms.size(); i++) {
-				tf *= terms.get(i).getTermFrequency(url);
-			}
-			// use corpusSize and calculate idf
-			t.
-			double idf = (double) corpusSize
-					/ (double) DBWrapperIndexer.getTerm(t);
-			// put scores in a vector of terms
-			// and dot product with the 1 vector
-			// return that number
-		}
-		return 1.0;
+	private void calculateTfIdf(Term term, String url,
+			HashMap<String, Double> urlToTFs) {
+		double tf = term.getTermFrequency(url);
+		double idf = (double) corpusSize / (double) urlToTFs.keySet().size();
+		UrlRanking temp = rankings.get(term);
+		temp.addTfIdfScore(term, (double) tf * idf); 
+		rankings.put(term, temp);
 	}
-	
+
 	public void destroy() {
 	
 	}
