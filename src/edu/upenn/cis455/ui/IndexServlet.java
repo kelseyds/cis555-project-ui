@@ -15,6 +15,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
+import edu.upenn.cis455.indexer.DocInfo;
 import edu.upenn.cis455.storage.DBWrapperIndexer;
 import edu.upenn.cis455.storage.Term;
 
@@ -66,6 +67,9 @@ public class IndexServlet extends HttpServlet {
 			rd.forward(request, response);
 		}*/
 	}
+	
+	private int corpusSize;
+	
 	private ArrayList<Result> getResults(String originalQuery)
 	{
 		DBWrapperIndexer.init("/home/cis455/workspace/cis555-project/database");
@@ -121,21 +125,23 @@ public class IndexServlet extends HttpServlet {
 		ArrayList<Result> results = new ArrayList<Result>();
 		//looking at all urls that contain a term, if a url contains more than one term then 
 		//boost its ranking by a factor of 5000, so 2 search terms adds 5000, 3 adds 10000, 4 adds 15000, etc.
-		for (String url: urlToTerms.keySet())
-		{
+		corpusSize = urlToTerms.keySet().size();
+		for (String url : urlToTerms.keySet()) {
 			double score = 0;
 			ArrayList<Term> terms = urlToTerms.get(url);
-			if(terms.size()>1)
-				score+= 5000*terms.size()-1;
-			double tf = terms.get(0).getTermFrequency(url);
-			for(int i =1; i<terms.size(); i++)
-			{
-				tf*=terms.get(i).getTermFrequency(url);
+			Double cosSim = calculateCosSim(terms, url);
+			Double pageRank = fetchPageRank(url);
+			Double proximityScore = calculateProximity(terms, url);
+			if (terms.size() > 1) {
+				score += 5000 * terms.size() - 1;
 			}
-			score+=tf;
-			edu.upenn.cis455.indexer.DocInfo docInfo = DBWrapperIndexer.getDocInfo(url);
+			score += (0 * cosSim) + (0 * pageRank) + (0 * proximityScore);
+
+			//score += tf;
+			DocInfo docInfo = DBWrapperIndexer
+					.getDocInfo(url);
 			Term firstTerm = terms.get(0);
-			
+
 			String docText = docInfo.getDocText();
 			System.out.println("docText = "+docText);
 			System.out.println("term = "+firstTerm.getTerm());
@@ -179,6 +185,32 @@ public class IndexServlet extends HttpServlet {
 		
 	}
 
+	private Double calculateProximity(ArrayList<Term> terms, String url) {
+		// TODO Fix this bug.
+		Term tmp = terms.get(0);
+		tmp.getLocations(url);
+		return (double) terms.size();
+	}
+
+	private Double fetchPageRank(String url) {
+		// TODO Fix this and make sure on startup
+		// we're downloading all the PageRank data
+		return 0.85;
+	}
+	private Double calculateCosSim(ArrayList<Term> terms, String url) {
+		// TODO Fix this bug.
+		double tf = terms.get(0).getTermFrequency(url);
+		for (int i = 1; i < terms.size(); i++) {
+			tf *= terms.get(i).getTermFrequency(url);
+		}
+		//use corpusSize and calculate idf
+		double idf = 1;
+		// put scores in a vector of terms
+		// and dot product with the 1 vector
+		// return that number
+		return tf * idf;
+	}
+	
 	public void destroy() {
 	
 	}
