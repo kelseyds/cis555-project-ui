@@ -12,15 +12,79 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+
 import edu.upenn.cis455.indexer.DocInfo;
 import edu.upenn.cis455.storage.DBWrapperIndexer;
+import edu.upenn.cis455.storage.PageRank;
 import edu.upenn.cis455.storage.Term;
 
 public class IndexServlet extends HttpServlet {
 	 @Override
 	  public void init(ServletConfig servletConfig)
 	  {
-		 
+		AmazonS3 s3;
+		String bucketName;
+		AWSCredentials credentials = null;
+		try {
+			credentials = new ProfileCredentialsProvider("default")
+					.getCredentials();
+		} catch (Exception e) {
+			throw new AmazonClientException(
+					"Cannot load the credentials from the credential profiles file. "
+							+ "Please make sure that your credentials file is at the correct "
+							+ "location (/home/cis455/.aws/credentials), and is in valid format.",
+					e);
+		}
+
+		s3 = new AmazonS3Client(credentials);
+		Region usEast1 = Region.getRegion(Regions.US_EAST_1);
+		s3.setRegion(usEast1);
+
+		bucketName = "for.indexer";
+		System.out.println("Listing objects");
+		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().withBucketName(bucketName).withPrefix("UrlS3batch:"));
+		for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) 
+		{
+			String key = objectSummary.getKey();
+			System.out.println("Getting object: " + key);
+			String fileName = key;
+			S3Object object = s3.getObject(new GetObjectRequest(bucketName, fileName));
+			InputStream input = object.getObjectContent();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					input));
+			
+			String line;
+			try {
+				while ((line = reader.readLine())!=null) 
+				{
+					String [] tokens = line.split("\t");
+					if(tokens.length<=1)
+					{
+						System.out.println("skipping badly formatted line: "+line);
+						continue;
+					}
+					String url = tokens[0];
+					Double pageRankScore = Double.valueOf((String)tokens[1]);
+					DBWrapperIndexer.putPageRank(url, pageRankScore);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+				
+			
+		}
 	  }
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		//response.sendRedirect("index.jsp");
