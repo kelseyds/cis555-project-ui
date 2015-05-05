@@ -4,13 +4,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.StringTokenizer;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
@@ -20,7 +17,11 @@ import edu.upenn.cis455.storage.DBWrapperIndexer;
 import edu.upenn.cis455.storage.Term;
 
 public class IndexServlet extends HttpServlet {
-
+	 @Override
+	  public void init(ServletConfig servletConfig)
+	  {
+		 
+	  }
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		//response.sendRedirect("index.jsp");
 		System.out.println(request.getServletPath());

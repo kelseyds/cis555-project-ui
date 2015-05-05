@@ -4,6 +4,7 @@
 	<servlet>
 		<servlet-name>IndexServlet</servlet-name>
 		<servlet-class>edu.upenn.cis455.ui.IndexServlet</servlet-class>
+		<load-on-startup>0</load-on-startup>
 	</servlet>
 
 	<servlet-mapping>
