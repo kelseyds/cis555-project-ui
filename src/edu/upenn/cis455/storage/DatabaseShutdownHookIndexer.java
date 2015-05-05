@@ -22,7 +22,7 @@ public class DatabaseShutdownHookIndexer extends Thread{
 			store.sync();
 			store.close();
 			environment.close();
-			System.out.println("Closed the Database");
+			System.out.println("Closed the Database!");
 		}
 	}
 }
