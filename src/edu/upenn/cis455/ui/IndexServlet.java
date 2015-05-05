@@ -258,7 +258,7 @@ public class IndexServlet extends HttpServlet {
 	private void fetchPageRank(String url) {
 		// TODO Fix this and make sure on startup
 		// we're downloading all the PageRank data
-		//PageRank pRank = DBWrapperIndexer.get
+		//PageRank pRank = DBWrapperIndexer.getPageRank(url);
 	}
 	
 
