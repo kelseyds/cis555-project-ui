@@ -36,6 +36,7 @@ public class IndexServlet extends HttpServlet {
 			response.setContentType("text/html");
 			System.out.println("in index servlet get for results");
 			String query = (String) request.getParameter("query");
+			
 			ArrayList<Result> results = (ArrayList<Result>) getResults(query);
 			/*
 			ArrayList<Result> results = new ArrayList<Result>();
@@ -65,11 +66,19 @@ public class IndexServlet extends HttpServlet {
 			rd.forward(request, response);
 		}*/
 	}
-	private ArrayList<Result> getResults(String searchString)
+	private ArrayList<Result> getResults(String originalQuery)
 	{
 		DBWrapperIndexer.init("/home/cis455/workspace/cis555-project/database");
-		System.out.println(searchString);
-		StringTokenizer st = new StringTokenizer(searchString, " ");
+		String [] originalQueryTokens = originalQuery.split(" ");
+		HashMap<String, String> basicWordToSearchQueryWord = new HashMap<String, String>();
+		String lowerCaseBasicSearchString ="";
+		for(int i = 0; i<originalQueryTokens.length; i++)
+		{
+			String basicQuery = originalQueryTokens[i].replaceAll("[^A-Za-z0-9]", "");
+			basicWordToSearchQueryWord.put(basicQuery, originalQueryTokens[i]);
+			lowerCaseBasicSearchString+=basicQuery+" ";
+		}
+		StringTokenizer st = new StringTokenizer(lowerCaseBasicSearchString, " ");
 		ArrayList<Term> allTerms = new ArrayList<Term>();
 		
 		HashMap<String, ArrayList<Term>> urlToTerms = new HashMap<String, ArrayList<Term>>();
@@ -83,18 +92,26 @@ public class IndexServlet extends HttpServlet {
 				System.out.println("term searched not found in database");
 				continue;
 			}
+			//store all Term objects associated with the search
 			allTerms.add(curr);
 			HashMap<String, Double> urlToTFs = curr.getUrlToTFHashMap();
 			for(String url: urlToTFs.keySet())
 			{
+				
 				if(urlToTerms.containsKey(url))
 				{
+					//if the url is in the hashmap of Url to Terms in the search query in that document
+					//then get the value for the hashmap, add this term to the arraylist and put it back in
+					// the hashmap
 					ArrayList<Term> terms = urlToTerms.get(url);
 					terms.add(curr);
 					urlToTerms.put(url, terms);
 				}
 				else
 				{
+					//looking at all urls and their TFs associated with one term
+					//if the url is not in the mapping from url to the Terms in the search query
+					//then add it to the hashmap
 					ArrayList<Term> terms = new ArrayList<Term>();
 					terms.add(curr);
 					urlToTerms.put(url, terms);
@@ -102,6 +119,8 @@ public class IndexServlet extends HttpServlet {
 			}
 		}
 		ArrayList<Result> results = new ArrayList<Result>();
+		//looking at all urls that contain a term, if a url contains more than one term then 
+		//boost its ranking by a factor of 5000, so 2 search terms adds 5000, 3 adds 10000, 4 adds 15000, etc.
 		for (String url: urlToTerms.keySet())
 		{
 			double score = 0;
@@ -118,9 +137,12 @@ public class IndexServlet extends HttpServlet {
 			Term firstTerm = terms.get(0);
 			
 			String docText = docInfo.getDocText();
-			Integer firstLocation = docText.indexOf(firstTerm.getTerm());
+			System.out.println("docText = "+docText);
+			System.out.println("term = "+firstTerm.getTerm());
+			String actualWord = basicWordToSearchQueryWord.get(firstTerm.getTerm());
+			Integer firstLocation = docText.toLowerCase().indexOf(actualWord.toLowerCase());
 			System.out.println("first location = "+firstLocation);
-			System.out.println("first term: "+ firstTerm.getTerm());
+			System.out.println("first term actual word: "+ actualWord);
 			Integer beginIndexSubstring = firstLocation - 150;
 			if(beginIndexSubstring<0)
 				beginIndexSubstring = 0;
