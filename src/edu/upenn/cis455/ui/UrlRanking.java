@@ -2,6 +2,7 @@ package edu.upenn.cis455.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import edu.upenn.cis455.storage.Term;
 
@@ -18,7 +19,7 @@ public class UrlRanking {
 	/** Stores the pageRank score for this url*/
 	private double pageRank;
 	/** Maps a Term to a list of locations of the term for this url*/
-	private HashMap<Term, ArrayList<Integer>> locations;
+	private HashMap<Term, LinkedList<Integer>> locations;
 	
 	public void addTfIdfScore(Term t, Double score) {
 		tfIdf.put(t, score);
@@ -28,7 +29,7 @@ public class UrlRanking {
 		pageRank = score;
 	}
 	
-	public void setLocations(HashMap<Term, ArrayList<Integer>> locs) {
+	public void setLocations(HashMap<Term, LinkedList<Integer>> locs) {
 		locations = locs;
 	}
 	

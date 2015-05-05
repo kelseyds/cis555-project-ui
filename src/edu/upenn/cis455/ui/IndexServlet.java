@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.StringTokenizer;
 
 import javax.servlet.RequestDispatcher;
@@ -134,11 +135,11 @@ public class IndexServlet extends HttpServlet {
 	}
 	
 	private int corpusSize;
-	private HashMap<Term, UrlRanking> rankings;
+	private HashMap<String, UrlRanking> rankings;
 	
 	private ArrayList<Result> getResults(String originalQuery)
 	{
-		rankings = new HashMap<Term, UrlRanking>();
+		rankings = new HashMap<String, UrlRanking>();
 		DBWrapperIndexer.init("/home/cis455/workspace/cis555-project/database");
 		String [] originalQueryTokens = originalQuery.split(" ");
 		HashMap<String, String> basicWordToSearchQueryWord = new HashMap<String, String>();
@@ -166,7 +167,7 @@ public class IndexServlet extends HttpServlet {
 			allTerms.add(curr);
 			HashMap<String, Double> urlToTFs = curr.getUrlToTFHashMap();
 			for (String url : urlToTFs.keySet()) {
-				rankings.put(curr, new UrlRanking(url));
+				rankings.put(url, new UrlRanking(url));
 				if (urlToTerms.containsKey(url)) {
 					// if the url is in the hashmap of Url to Terms in the
 					// search query in that document
@@ -250,15 +251,21 @@ public class IndexServlet extends HttpServlet {
 
 	private void calculateProximity(ArrayList<Term> terms, String url) {
 		// TODO Fix this bug.
-		Term tmp = terms.get(0);
-		tmp.getLocations(url);
-		
+		HashMap<Term, LinkedList<Integer>> locations = new HashMap<Term, LinkedList<Integer>>();
+		UrlRanking temp = rankings.get(url);
+		for (Term t : terms) {
+			locations.put(t, t.getLocations(url));
+		}
+		temp.setLocations(locations);
 	}
 
 	private void fetchPageRank(String url) {
 		// TODO Fix this and make sure on startup
 		// we're downloading all the PageRank data
-		//PageRank pRank = DBWrapperIndexer.getPageRank(url);
+		PageRank pRank = DBWrapperIndexer.getPageRank(url);
+		UrlRanking temp = rankings.get(url);
+		temp.setPageRank(pRank.getPageRankScore());
+		rankings.put(url, temp);
 	}
 	
 
@@ -274,7 +281,7 @@ public class IndexServlet extends HttpServlet {
 		double idf = (double) corpusSize / (double) urlToTFs.keySet().size();
 		UrlRanking temp = rankings.get(term);
 		temp.addTfIdfScore(term, (double) tf * idf); 
-		rankings.put(term, temp);
+		rankings.put(url, temp);
 	}
 
 	public void destroy() {
