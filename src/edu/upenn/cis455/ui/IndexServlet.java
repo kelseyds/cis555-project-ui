@@ -74,7 +74,7 @@ public class IndexServlet extends HttpServlet {
 		String lowerCaseBasicSearchString ="";
 		for(int i = 0; i<originalQueryTokens.length; i++)
 		{
-			String basicQuery = originalQueryTokens[i].replaceAll("[^A-Za-z0-9]", "");
+			String basicQuery = originalQueryTokens[i].replaceAll("[^A-Za-z0-9]", "").toLowerCase();
 			basicWordToSearchQueryWord.put(basicQuery, originalQueryTokens[i]);
 			lowerCaseBasicSearchString+=basicQuery+" ";
 		}
