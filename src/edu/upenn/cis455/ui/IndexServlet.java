@@ -189,6 +189,7 @@ public class IndexServlet extends HttpServlet {
 				calculateTfIdf(curr, url, urlToTFs);
 			}
 		}
+		
 		ArrayList<Result> results = new ArrayList<Result>();
 		//looking at all urls that contain a term, if a url contains more than one term then 
 		//boost its ranking by a factor of 5000, so 2 search terms adds 5000, 3 adds 10000, 4 adds 15000, etc.
@@ -197,7 +198,8 @@ public class IndexServlet extends HttpServlet {
 			double score = 0;
 			ArrayList<Term> terms = urlToTerms.get(url);
 			fetchPageRank(url);
-			calculateProximity(terms, url);
+			setupProximity(terms, url);
+			setCosSim(url, allTerms);
 			if (terms.size() > 1) {
 				score += 5000 * terms.size() - 1;
 			}
@@ -249,19 +251,22 @@ public class IndexServlet extends HttpServlet {
 		
 	}
 
-	private void calculateProximity(ArrayList<Term> terms, String url) {
-		// TODO Fix this bug.
+	private void setCosSim(String url, ArrayList<Term> allTerms) {
+		UrlRanking temp = rankings.get(url);
+		temp.calculateCosSim(allTerms);
+		rankings.put(url, temp);
+	}
+	private void setupProximity(ArrayList<Term> terms, String url) {
 		HashMap<Term, LinkedList<Integer>> locations = new HashMap<Term, LinkedList<Integer>>();
 		UrlRanking temp = rankings.get(url);
 		for (Term t : terms) {
 			locations.put(t, t.getLocations(url));
 		}
 		temp.setLocations(locations);
+		rankings.put(url, temp);
 	}
 
 	private void fetchPageRank(String url) {
-		// TODO Fix this and make sure on startup
-		// we're downloading all the PageRank data
 		PageRank pRank = DBWrapperIndexer.getPageRank(url);
 		UrlRanking temp = rankings.get(url);
 		temp.setPageRank(pRank.getPageRankScore());
