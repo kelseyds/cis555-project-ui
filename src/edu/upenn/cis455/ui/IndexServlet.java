@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.StringTokenizer;
 
 import javax.servlet.RequestDispatcher;
@@ -172,7 +171,9 @@ public class IndexServlet extends HttpServlet {
 			allTerms.add(curr);
 			HashMap<String, Double> urlToTFs = curr.getUrlToTFHashMap();
 			for (String url : urlToTFs.keySet()) {
-				rankings.put(url, new UrlRanking(url));
+				if (!rankings.containsKey(url)) {
+					rankings.put(url, new UrlRanking(url));
+				}
 				if (urlToTerms.containsKey(url)) {
 					// if the url is in the hashmap of Url to Terms in the
 					// search query in that document
@@ -191,7 +192,7 @@ public class IndexServlet extends HttpServlet {
 					terms.add(curr);
 					urlToTerms.put(url, terms);
 				}
-				calculateTfIdf(curr, url, urlToTFs);
+	
 			}
 		}
 		
@@ -199,6 +200,12 @@ public class IndexServlet extends HttpServlet {
 		//looking at all urls that contain a term, if a url contains more than one term then 
 		//boost its ranking by a factor of 5000, so 2 search terms adds 5000, 3 adds 10000, 4 adds 15000, etc.
 		corpusSize = urlToTerms.keySet().size();
+		for (Term t : allTerms) {
+			HashMap<String, Double> urlToTFs = t.getUrlToTFHashMap();
+			for (String url : urlToTFs.keySet()) {
+				calculateTfIdf(t, url, urlToTFs);
+			}
+		}
 		for (String url : urlToTerms.keySet()) {
 			double score = 0;
 			ArrayList<Term> terms = urlToTerms.get(url);
@@ -284,7 +291,7 @@ public class IndexServlet extends HttpServlet {
 	private void calculateTfIdf(Term term, String url,
 			HashMap<String, Double> urlToTFs) {
 		double tf = term.getTermFrequency(url);
-		double idf = (double) corpusSize / (double) urlToTFs.keySet().size();
+		double idf = Math.log((double) corpusSize / (double) urlToTFs.keySet().size());
 		UrlRanking temp = rankings.get(term);
 		temp.addTfIdfScore(term, (double) tf * idf); 
 		rankings.put(url, temp);
