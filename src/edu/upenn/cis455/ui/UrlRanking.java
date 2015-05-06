@@ -20,8 +20,8 @@ public class UrlRanking {
 		pageRankWeight = 0.25;
 		proximityWeight = 0.25;
 		numTermsWeight = 0.25;
-		tfIdf = new HashMap<Term, Double>();
 		terms = new HashSet<Term>();
+		tfIdf = new HashMap<Term, Double>();
 	}
 	
 	/** Maps a Term to a tfIdf score for this url*/
@@ -69,8 +69,9 @@ public class UrlRanking {
 	}
 
 	public void calculateProximity() {
-		if (queryLength < 2) {
-			proximity = 1.0;
+		if (numTerms < 2) {
+			System.out.println("numTerms is 1 on url: "+url);
+			proximity = 10000;
 			return;
 		}
 		ArrayList<Double> averages = new ArrayList<Double>();
@@ -89,6 +90,8 @@ public class UrlRanking {
 				}
 			}
 		}
+		if(proximity == 0 || proximity < numTerms)
+			proximity = numTerms;
 	}
 	
 	public double getProximity() {
@@ -97,6 +100,7 @@ public class UrlRanking {
 	
 	public double calculateHypeScore() {
 		// TODO Tune this.
+		System.out.println("url is"+url+" cossim is: "+cosSim+" pageRank is: "+pageRank+"numTerms is: "+numTerms+" proximity is :"+proximity+" queryLength is: "+queryLength);
 		return (cosSimWeight * cosSim) + (pageRankWeight * pageRank)
 				+ (proximityWeight * (numTerms / proximity))
 				+ (numTermsWeight * (numTerms / (double) queryLength));

@@ -48,7 +48,7 @@ public class DBWrapperIndexer {
         termIndex = store.getPrimaryIndex(String.class, Term.class);
         s3FileIndex = store.getPrimaryIndex(String.class, S3File.class);
         docInfoIndex = store.getPrimaryIndex(String.class, DocInfo.class);
-        pageRankIndex = store.getPrimaryIndex(String.class, PageRank.class);
+        //pageRankIndex = store.getPrimaryIndex(String.class, PageRank.class);
         DatabaseShutdownHookIndexer hook = new DatabaseShutdownHookIndexer(myEnv, store);
         Runtime.getRuntime().addShutdownHook(hook);
         System.out.println("Database Started");
@@ -95,11 +95,12 @@ public class DBWrapperIndexer {
 	}
 	
 	public static void putPageRank(String u, Double pr) {
-		pageRankIndex.put(new PageRank(u, pr));
+		//pageRankIndex.put(new PageRank(u, pr));
 	}
 	
 	public static PageRank getPageRank(String u) {
-		return pageRankIndex.get(u);
+		return null;
+				//pageRankIndex.get(u);
 	}
 }
 	
