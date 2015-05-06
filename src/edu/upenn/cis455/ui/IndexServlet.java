@@ -52,9 +52,9 @@ public class IndexServlet extends HttpServlet {
 		Region usEast1 = Region.getRegion(Regions.US_EAST_1);
 		s3.setRegion(usEast1);
 
-		bucketName = "for.indexer";
+		bucketName = "page.rank.cis555";
 		System.out.println("Listing objects");
-		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().withBucketName(bucketName).withPrefix("UrlS3batch:"));
+		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().withBucketName(bucketName).withPrefix("output/UrlS3batch:"));
 		for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) 
 		{
 			String key = objectSummary.getKey();
@@ -139,7 +139,7 @@ public class IndexServlet extends HttpServlet {
 	private ArrayList<Result> getResults(String originalQuery)
 	{
 		rankings = new HashMap<Term, UrlRanking>();
-		DBWrapperIndexer.init("/home/cis455/workspace/cis555-project/database");
+		DBWrapperIndexer.init("/ebs/storage/database");
 		String [] originalQueryTokens = originalQuery.split(" ");
 		HashMap<String, String> basicWordToSearchQueryWord = new HashMap<String, String>();
 		String lowerCaseBasicSearchString ="";

@@ -12,7 +12,7 @@
     // avoid creating new clients for each web request
     private AmazonEC2         ec2;
     private AmazonS3           s3;
-    private AmazonDynamoDB dynamo;
+    //private AmazonDynamoDB dynamo;
  %>
 
 <%
@@ -32,9 +32,9 @@
 <%
     if (ec2 == null) {
         AWSCredentialsProvider credentialsProvider = new ClasspathPropertiesFileCredentialsProvider();
-        ec2    = new AmazonEC2Client(credentialsProvider);
+        //ec2    = new AmazonEC2Client(credentialsProvider);
         s3     = new AmazonS3Client(credentialsProvider);
-        dynamo = new AmazonDynamoDBClient(credentialsProvider);
+        //dynamo = new AmazonDynamoDBClient(credentialsProvider);
     }
 %>
 
@@ -76,22 +76,22 @@
 
         <div class="section grid grid5 sdb">
             <h2>Amazon DynamoDB Tables:</h2>
-            <ul>
-            <% for (String tableName : dynamo.listTables().getTableNames()) { %>
+           <!--   <ul>
+            <%-- for (String tableName : dynamo.listTables().getTableNames()) { %>
                <li> <%= tableName %></li>
-            <% } %>
-            </ul>
+            <% } --%>
+            </ul>-->
         </div>
 
         <div class="section grid grid5 gridlast ec2">
             <h2>Amazon EC2 Instances:</h2>
-            <ul>
-            <% for (Reservation reservation : ec2.describeInstances().getReservations()) { %>
+            <!--  <ul>
+            <%-- for (Reservation reservation : ec2.describeInstances().getReservations()) { %>
                 <% for (Instance instance : reservation.getInstances()) { %>
                    <li> <%= instance.getInstanceId() %></li>
                 <% } %>
-            <% } %>
-            </ul>
+            <% } --%>
+            </ul>-->
         </div>
     </div>
 </body>
