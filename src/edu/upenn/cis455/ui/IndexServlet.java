@@ -32,7 +32,12 @@ import edu.upenn.cis455.storage.PageRank;
 import edu.upenn.cis455.storage.Term;
 
 public class IndexServlet extends HttpServlet {
-	 @Override
+	 /**
+	 * This is the unique identifier.
+	 */
+	private static final long serialVersionUID = -5223491690701313558L;
+
+	@Override
 	  public void init(ServletConfig servletConfig)
 	  {
 		AmazonS3 s3;
@@ -200,10 +205,10 @@ public class IndexServlet extends HttpServlet {
 			fetchPageRank(url);
 			setupProximity(terms, url);
 			setCosSim(url, allTerms);
-			if (terms.size() > 1) {
+			/*if (terms.size() > 1) {
 				score += 5000 * terms.size() - 1;
-			}
-			//score = rankings.get(url).calculateHypeScore();
+			}*/
+			score = rankings.get(url).calculateHypeScore();
 			DocInfo docInfo = DBWrapperIndexer
 					.getDocInfo(url);
 			Term firstTerm = terms.get(0);
@@ -257,12 +262,8 @@ public class IndexServlet extends HttpServlet {
 		rankings.put(url, temp);
 	}
 	private void setupProximity(ArrayList<Term> terms, String url) {
-		HashMap<Term, LinkedList<Integer>> locations = new HashMap<Term, LinkedList<Integer>>();
 		UrlRanking temp = rankings.get(url);
-		for (Term t : terms) {
-			locations.put(t, t.getLocations(url));
-		}
-		temp.setLocations(locations);
+		temp.calculateProximity();
 		rankings.put(url, temp);
 	}
 
