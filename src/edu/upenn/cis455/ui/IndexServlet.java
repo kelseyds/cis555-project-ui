@@ -295,14 +295,12 @@ public class IndexServlet extends HttpServlet {
 		double tf = term.getTermFrequency(url);
 		double idf = Math.log((double) corpusSize / (double) urlToTFs.keySet().size());
 		UrlRanking temp = rankings.get(url);
-<<<<<<< HEAD
-=======
+		
 		System.out.println("tf is: "+ tf);
 		System.out.println("idf is: "+ idf+"corpusSize is: "+ corpusSize+" url size is: "+urlToTFs.keySet().size());
 		System.out.println("temp UrlRanking object is: "+ temp);
 		System.out.println("term is: "+ term);
 		
->>>>>>> branch 'master' of https://github.com/kelseyds/cis555-project-ui.git
 		temp.addTfIdfScore(term, (double) tf * idf); 
 		rankings.put(url, temp);
 	}
