@@ -289,7 +289,7 @@ public class IndexServlet extends HttpServlet {
 			HashMap<String, Double> urlToTFs) {
 		double tf = term.getTermFrequency(url);
 		double idf = Math.log((double) corpusSize / (double) urlToTFs.keySet().size());
-		UrlRanking temp = rankings.get(term);
+		UrlRanking temp = rankings.get(url);
 		temp.addTfIdfScore(term, (double) tf * idf); 
 		rankings.put(url, temp);
 	}

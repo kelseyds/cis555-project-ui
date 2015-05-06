@@ -20,6 +20,8 @@ public class UrlRanking {
 		pageRankWeight = 0.25;
 		proximityWeight = 0.25;
 		numTermsWeight = 0.25;
+		tfIdf = new HashMap<Term, Double>();
+		terms = new HashSet<Term>();
 	}
 	
 	/** Maps a Term to a tfIdf score for this url*/
@@ -29,7 +31,7 @@ public class UrlRanking {
 	/** Maps a Term to a list of locations of the term for this url*/
 	private HashSet<Term> terms;
 	/** Stores the proximity for this url*/
-	private int proximity;
+	private double proximity;
 	/** Stores the number of terms in the query that appear on the page*/
 	private int numTerms;
 	/** Stores the cosine similarity for this url with the query*/
@@ -67,6 +69,10 @@ public class UrlRanking {
 	}
 
 	public void calculateProximity() {
+		if (queryLength < 2) {
+			proximity = 1.0;
+			return;
+		}
 		ArrayList<Double> averages = new ArrayList<Double>();
 		for (Term t : terms) {
 			int sum = 0;
@@ -85,7 +91,7 @@ public class UrlRanking {
 		}
 	}
 	
-	public int getProximity() {
+	public double getProximity() {
 		return proximity;
 	}
 	
