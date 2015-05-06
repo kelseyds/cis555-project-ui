@@ -31,7 +31,12 @@ import edu.upenn.cis455.storage.PageRank;
 import edu.upenn.cis455.storage.Term;
 
 public class IndexServlet extends HttpServlet {
-	 @Override
+	 /**
+	 * This is the unique identifier.
+	 */
+	private static final long serialVersionUID = -5223491690701313558L;
+
+	@Override
 	  public void init(ServletConfig servletConfig)
 	  {
 		AmazonS3 s3;
@@ -134,11 +139,11 @@ public class IndexServlet extends HttpServlet {
 	}
 	
 	private int corpusSize;
-	private HashMap<Term, UrlRanking> rankings;
+	private HashMap<String, UrlRanking> rankings;
 	
 	private ArrayList<Result> getResults(String originalQuery)
 	{
-		rankings = new HashMap<Term, UrlRanking>();
+		rankings = new HashMap<String, UrlRanking>();
 		DBWrapperIndexer.init("/ebs/storage/database");
 		String [] originalQueryTokens = originalQuery.split(" ");
 		HashMap<String, String> basicWordToSearchQueryWord = new HashMap<String, String>();
@@ -166,7 +171,9 @@ public class IndexServlet extends HttpServlet {
 			allTerms.add(curr);
 			HashMap<String, Double> urlToTFs = curr.getUrlToTFHashMap();
 			for (String url : urlToTFs.keySet()) {
-				rankings.put(curr, new UrlRanking(url));
+				if (!rankings.containsKey(url)) {
+					rankings.put(url, new UrlRanking(url));
+				}
 				if (urlToTerms.containsKey(url)) {
 					// if the url is in the hashmap of Url to Terms in the
 					// search query in that document
@@ -185,22 +192,26 @@ public class IndexServlet extends HttpServlet {
 					terms.add(curr);
 					urlToTerms.put(url, terms);
 				}
-				calculateTfIdf(curr, url, urlToTFs);
+	
 			}
 		}
+		
 		ArrayList<Result> results = new ArrayList<Result>();
 		//looking at all urls that contain a term, if a url contains more than one term then 
 		//boost its ranking by a factor of 5000, so 2 search terms adds 5000, 3 adds 10000, 4 adds 15000, etc.
 		corpusSize = urlToTerms.keySet().size();
+		for (Term t : allTerms) {
+			HashMap<String, Double> urlToTFs = t.getUrlToTFHashMap();
+			for (String url : urlToTFs.keySet()) {
+				calculateTfIdf(t, url, urlToTFs);
+			}
+		}
 		for (String url : urlToTerms.keySet()) {
-			double score = 0;
 			ArrayList<Term> terms = urlToTerms.get(url);
 			fetchPageRank(url);
-			calculateProximity(terms, url);
-			if (terms.size() > 1) {
-				score += 5000 * terms.size() - 1;
-			}
-			//score = rankings.get(url).calculateHypeScore();
+			setupProximity(terms, url);
+			setCosSim(url, allTerms);
+			double score = rankings.get(url).calculateHypeScore();
 			DocInfo docInfo = DBWrapperIndexer
 					.getDocInfo(url);
 			Term firstTerm = terms.get(0);
@@ -248,17 +259,23 @@ public class IndexServlet extends HttpServlet {
 		
 	}
 
-	private void calculateProximity(ArrayList<Term> terms, String url) {
-		// TODO Fix this bug.
-		Term tmp = terms.get(0);
-		tmp.getLocations(url);
-		
+	private void setCosSim(String url, ArrayList<Term> allTerms) {
+		UrlRanking temp = rankings.get(url);
+		temp.calculateCosSim(allTerms);
+		rankings.put(url, temp);
+	}
+	
+	private void setupProximity(ArrayList<Term> terms, String url) {
+		UrlRanking temp = rankings.get(url);
+		temp.calculateProximity();
+		rankings.put(url, temp);
 	}
 
 	private void fetchPageRank(String url) {
-		// TODO Fix this and make sure on startup
-		// we're downloading all the PageRank data
-		//PageRank pRank = DBWrapperIndexer.get
+		PageRank pRank = DBWrapperIndexer.getPageRank(url);
+		UrlRanking temp = rankings.get(url);
+		temp.setPageRank(pRank.getPageRankScore());
+		rankings.put(url, temp);
 	}
 	
 
@@ -271,10 +288,10 @@ public class IndexServlet extends HttpServlet {
 	private void calculateTfIdf(Term term, String url,
 			HashMap<String, Double> urlToTFs) {
 		double tf = term.getTermFrequency(url);
-		double idf = (double) corpusSize / (double) urlToTFs.keySet().size();
+		double idf = Math.log((double) corpusSize / (double) urlToTFs.keySet().size());
 		UrlRanking temp = rankings.get(term);
 		temp.addTfIdfScore(term, (double) tf * idf); 
-		rankings.put(term, temp);
+		rankings.put(url, temp);
 	}
 
 	public void destroy() {
