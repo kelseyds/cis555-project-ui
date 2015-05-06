@@ -52,10 +52,11 @@ public class UrlRanking {
 	
 	public void calculateCosSim(ArrayList<Term> query) {
 		queryLength = query.size();
+		double unitVect = 1.0 / queryLength;
 		double dotProduct = 0.0;
 		for (Term t : query) {
 			if (tfIdf.containsKey(t)) {
-				dotProduct += (1.0 * tfIdf.get(t));
+				dotProduct += (unitVect * tfIdf.get(t));
 			}
 		}
 		cosSim = dotProduct;
@@ -64,7 +65,7 @@ public class UrlRanking {
 	public double getPageRank() {
 		return pageRank;
 	}
-	
+
 	public void calculateProximity() {
 		ArrayList<Double> averages = new ArrayList<Double>();
 		for (Term t : terms) {
@@ -91,8 +92,8 @@ public class UrlRanking {
 	public double calculateHypeScore() {
 		// TODO Tune this.
 		return (cosSimWeight * cosSim) + (pageRankWeight * pageRank)
-				+ (proximityWeight * proximity)
-				+ (numTermsWeight * ((numTerms / (double) queryLength)) * 100);
+				+ (proximityWeight * (numTerms / proximity))
+				+ (numTermsWeight * (numTerms / (double) queryLength));
 	}
 
 	private double cosSimWeight;

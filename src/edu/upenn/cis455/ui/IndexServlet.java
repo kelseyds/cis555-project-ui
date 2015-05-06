@@ -207,15 +207,11 @@ public class IndexServlet extends HttpServlet {
 			}
 		}
 		for (String url : urlToTerms.keySet()) {
-			double score = 0;
 			ArrayList<Term> terms = urlToTerms.get(url);
 			fetchPageRank(url);
 			setupProximity(terms, url);
 			setCosSim(url, allTerms);
-			/*if (terms.size() > 1) {
-				score += 5000 * terms.size() - 1;
-			}*/
-			score = rankings.get(url).calculateHypeScore();
+			double score = rankings.get(url).calculateHypeScore();
 			DocInfo docInfo = DBWrapperIndexer
 					.getDocInfo(url);
 			Term firstTerm = terms.get(0);
@@ -268,6 +264,7 @@ public class IndexServlet extends HttpServlet {
 		temp.calculateCosSim(allTerms);
 		rankings.put(url, temp);
 	}
+	
 	private void setupProximity(ArrayList<Term> terms, String url) {
 		UrlRanking temp = rankings.get(url);
 		temp.calculateProximity();
