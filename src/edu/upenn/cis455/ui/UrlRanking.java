@@ -15,6 +15,7 @@ public class UrlRanking {
 	public UrlRanking(String u) {
 		url = u;
 		numTerms = 0;
+		titleBonus = 0;
 		// defaults
 		cosSimWeight = 0.25;
 		pageRankWeight = 0.25;
@@ -103,7 +104,8 @@ public class UrlRanking {
 		System.out.println("url is"+url+" cossim is: "+cosSim+" pageRank is: "+pageRank+"numTerms is: "+numTerms+" proximity is :"+proximity+" queryLength is: "+queryLength);
 		return (cosSimWeight * cosSim) + (pageRankWeight * pageRank)
 				+ (proximityWeight * (numTerms / proximity))
-				+ (numTermsWeight * (numTerms / (double) queryLength));
+				+ (numTermsWeight * (numTerms / (double) queryLength))
+				+ ((double) titleBonus / (double) numTerms);
 	}
 
 	private double cosSimWeight;
@@ -111,11 +113,17 @@ public class UrlRanking {
 	private double proximityWeight;
 	private double numTermsWeight;
 	
+	private double titleBonus;
+	
 	public void setWeights(double cossim, double pr, double prox, double numWords) {
 		cosSimWeight = cossim;
 		pageRankWeight = pr;
 		proximityWeight = prox;
 		numTermsWeight = numWords;
+	}
+
+	public void incrementTitleBonus(int matches) {
+		titleBonus += matches;
 	}
 	
 }

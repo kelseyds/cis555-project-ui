@@ -214,13 +214,11 @@ public class IndexServlet extends HttpServlet {
 			setCosSim(url, allTerms);
 			setupProximity(terms, url);
 			
-			double score = rankings.get(url).calculateHypeScore();
 			DocInfo docInfo = DBWrapperIndexer
 					.getDocInfo(url);
 			Term firstTerm = terms.get(0);
 
 			String docText = docInfo.getDocText();
-			System.out.println("docText = "+docText);
 			System.out.println("term = "+firstTerm.getTerm());
 			String actualWord = basicWordToSearchQueryWord.get(firstTerm.getTerm());
 			Integer firstLocation = docText.toLowerCase().indexOf(actualWord.toLowerCase());
@@ -245,15 +243,18 @@ public class IndexServlet extends HttpServlet {
 			String description = substring.substring(startIndex, endIndex);
 			System.out.println("description: "+description);
 			description = "... "+description+" ...";
+			String title = docInfo.getTitle();
 			for(Term term: allTerms)
 			{
+				calculateTitle(title, term, url);
 				String word = term.getTerm();
 				description = description.replaceAll(" (\\p{Punct})*(?i)("+word+")(\\p{Punct})* ", " $1<strong>$2</strong>$3 ");
 			}
 			Result result = new Result();
 			result.setUrl(url);
-			result.setTitle(docInfo.getTitle());
+			result.setTitle(title);
 			result.setDescription(description);
+			double score = rankings.get(url).calculateHypeScore();
 			result.setScore(score);
 			results.add(result);
 		}
@@ -262,6 +263,27 @@ public class IndexServlet extends HttpServlet {
 		
 	}
 
+	/**
+	 * Gives the rankings a boost when the query words are in the
+	 * document's title
+	 * @param title
+	 * @param term
+	 */
+	private void calculateTitle(String title, Term term, String url) {
+		int matches = 0;
+		String[] tokens = title.split(" ");
+		for (String t : tokens) {
+			t = t.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
+			if (term.getTerm().equals(t)) {
+				matches += 1;
+			}
+		}
+		if (matches > 1) matches = 1;
+		UrlRanking temp = rankings.get(url);
+		temp.incrementTitleBonus(matches);
+		rankings.put(url, temp);
+		
+	}
 	private void setCosSim(String url, ArrayList<Term> allTerms) {
 		UrlRanking temp = rankings.get(url);
 		temp.calculateCosSim(allTerms);
