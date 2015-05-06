@@ -20,6 +20,8 @@ public class UrlRanking {
 		pageRankWeight = 0.25;
 		proximityWeight = 0.25;
 		numTermsWeight = 0.25;
+		terms = new HashSet<Term>();
+		tfIdf = new HashMap<Term, Double>();
 	}
 	
 	/** Maps a Term to a tfIdf score for this url*/
@@ -29,7 +31,7 @@ public class UrlRanking {
 	/** Maps a Term to a list of locations of the term for this url*/
 	private HashSet<Term> terms;
 	/** Stores the proximity for this url*/
-	private int proximity;
+	private double proximity;
 	/** Stores the number of terms in the query that appear on the page*/
 	private int numTerms;
 	/** Stores the cosine similarity for this url with the query*/
@@ -67,6 +69,11 @@ public class UrlRanking {
 	}
 
 	public void calculateProximity() {
+		if (queryLength == 1) {
+			System.out.println("queryLength is 1 on url: "+url);
+			proximity = 1;
+			return;
+		}
 		ArrayList<Double> averages = new ArrayList<Double>();
 		for (Term t : terms) {
 			int sum = 0;
@@ -83,14 +90,17 @@ public class UrlRanking {
 				}
 			}
 		}
+		if(proximity == 0)
+			proximity = 0.0001;
 	}
 	
-	public int getProximity() {
+	public double getProximity() {
 		return proximity;
 	}
 	
 	public double calculateHypeScore() {
 		// TODO Tune this.
+		System.out.println("url is"+url+" cossim is: "+cosSim+" pageRank is: "+pageRank+"numTerms is: "+numTerms+" proximity is :"+proximity+" queryLength is: "+queryLength);
 		return (cosSimWeight * cosSim) + (pageRankWeight * pageRank)
 				+ (proximityWeight * (numTerms / proximity))
 				+ (numTermsWeight * (numTerms / (double) queryLength));

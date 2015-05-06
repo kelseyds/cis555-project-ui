@@ -59,7 +59,7 @@ public class IndexServlet extends HttpServlet {
 
 		bucketName = "page.rank.cis555";
 		System.out.println("Listing objects");
-		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().withBucketName(bucketName).withPrefix("output/UrlS3batch:"));
+		ObjectListing objectListing = s3.listObjects(new ListObjectsRequest().withBucketName(bucketName).withPrefix("out/"));
 		for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) 
 		{
 			String key = objectSummary.getKey();
@@ -81,8 +81,10 @@ public class IndexServlet extends HttpServlet {
 						continue;
 					}
 					String url = tokens[0];
-					Double pageRankScore = Double.valueOf((String)tokens[1]);
-					DBWrapperIndexer.putPageRank(url, pageRankScore);
+					Double pageRankScore = Double.parseDouble((String)tokens[1]);
+					//System.out.println("url = "+ url);
+					//System.out.println("pageRankScore = "+ pageRankScore);
+					//DBWrapperIndexer.putPageRank(url, pageRankScore);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -98,8 +100,8 @@ public class IndexServlet extends HttpServlet {
 	    {
 			response.setContentType("text/html");
 			System.out.println("in index servlet get for search");
-			ServletContext sc = this.getServletContext();
-			RequestDispatcher rd = sc.getRequestDispatcher("/index.jsp");
+			//ServletContext sc = this.getServletContext();
+			RequestDispatcher rd = request.getRequestDispatcher("/index.jsp");
 			rd.include(request, response);
 	    }
 		else if(request.getServletPath().equals("/results"))
@@ -124,8 +126,8 @@ public class IndexServlet extends HttpServlet {
 			*/
 			if(results!=null)
 				request.setAttribute("resultsList",results);
-			ServletContext sc = this.getServletContext();
-			RequestDispatcher rd = sc.getRequestDispatcher("/results.jsp");
+			//ServletContext sc = this.getServletContext();
+			RequestDispatcher rd = request.getRequestDispatcher("/results.jsp");
 			rd.include(request, response);
 		}
 		/*else if(request.getServletPath().equals("/styles"))
@@ -209,8 +211,9 @@ public class IndexServlet extends HttpServlet {
 		for (String url : urlToTerms.keySet()) {
 			ArrayList<Term> terms = urlToTerms.get(url);
 			fetchPageRank(url);
-			setupProximity(terms, url);
 			setCosSim(url, allTerms);
+			setupProximity(terms, url);
+			
 			double score = rankings.get(url).calculateHypeScore();
 			DocInfo docInfo = DBWrapperIndexer
 					.getDocInfo(url);
@@ -273,6 +276,8 @@ public class IndexServlet extends HttpServlet {
 
 	private void fetchPageRank(String url) {
 		PageRank pRank = DBWrapperIndexer.getPageRank(url);
+		if(pRank == null)
+			pRank = new PageRank(url, 1.0);
 		UrlRanking temp = rankings.get(url);
 		temp.setPageRank(pRank.getPageRankScore());
 		rankings.put(url, temp);
@@ -289,7 +294,12 @@ public class IndexServlet extends HttpServlet {
 			HashMap<String, Double> urlToTFs) {
 		double tf = term.getTermFrequency(url);
 		double idf = Math.log((double) corpusSize / (double) urlToTFs.keySet().size());
-		UrlRanking temp = rankings.get(term);
+		UrlRanking temp = rankings.get(url);
+		System.out.println("tf is: "+ tf);
+		System.out.println("idf is: "+ idf+"corpusSize is: "+ corpusSize+" url size is: "+urlToTFs.keySet().size());
+		System.out.println("temp UrlRanking object is: "+ temp);
+		System.out.println("term is: "+ term);
+		
 		temp.addTfIdfScore(term, (double) tf * idf); 
 		rankings.put(url, temp);
 	}
